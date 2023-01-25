@@ -1,0 +1,13 @@
+82496ea3 (kevzettler     2018-02-28 13:37:02 -0800  1) # Git Blame example
+82496ea3 (kevzettler     2018-02-28 13:37:02 -0800  2)
+89feb84d (Albert So      2018-03-01 00:54:03 +0000  3) This repository is an example of a project with multiple contributors making commits.
+82496ea3 (kevzettler     2018-02-28 13:37:02 -0800  4)
+82496ea3 (kevzettler     2018-02-28 13:37:02 -0800  5) The repo use used elsewhere to demonstrate `git blame`
+82496ea3 (kevzettler     2018-02-28 13:37:02 -0800  6)
+89feb84d (Albert So      2018-03-01 00:54:03 +0000  7) Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod TEMPOR incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum
+89feb84d (Albert So      2018-03-01 00:54:03 +0000  8)
+eb06faed (Juni Mukherjee 2018-03-01 19:53:23 +0000  9) Annotates each line in the given file with information from the revision which last modified the line. Optionally, start annotating from the given revision.
+eb06faed (Juni Mukherjee 2018-03-01 19:53:23 +0000 10)
+548dabed (Juni Mukherjee 2018-03-01 19:55:15 +0000 11) Creating a line to support documentation needs for git blame.
+548dabed (Juni Mukherjee 2018-03-01 19:55:15 +0000 12)
+548dabed (Juni Mukherjee 2018-03-01 19:55:15 +0000 13) Also, it is important to have a few of these commits to clearly reflect the who, the what and the when. This will help Kev get good screenshots when he runs the git blame on this README.
