@@ -1,8 +1,8 @@
 import subprocess
 
 # get annotate of specified file
-repo_path = "cd /Users/oisin/Desktop/Forth-Year/FYP/extracted-repos/example"
-file_name = "README.md"
+repo_path = "cd /Users/oisin/Desktop/Forth-Year/FYP/extracted-repos/html5-boilerplate"
+file_name = ".eslintrc.js"
 command = repo_path + " && git annotate " + file_name
 annotation = subprocess.check_output(command, shell=True).decode('utf-8')
 
@@ -11,13 +11,24 @@ segannotate = annotation.split("\n")
 
 # various checks to see if the code actually contributed anything
 def line_is_valid(codeline):
-    # check if the line is empty
-    if codeline == "":
+    # check if the line is empty or is just a close bracket
+    if codeline == "" or codeline[0] == "}" or codeline[0] == "]" or codeline[0] == ")":
         return False
+    # check if the line is just an close bracket
+    else:
+        # closed brackets on the first char are delt with above. Otherwise check if the
+        # current char is empty, if so check the next char, if not empty, if it is a closed 
+        # bracket then return false, otherwise move to next check
+        for i in range(len(codeline)):
+            if codeline[i] == " ":
+                if codeline[i + 1] == "}" or codeline[i + 1] == "]" or codeline[i + 1] == ")":
+                    return False
+                elif codeline[i + 1] != " ":
+                    break
     # check to see if the line is a comment
     # check to see if the line is boilerplate
-    else:
-        return True
+    # otherwise it's good
+    return True
 
 # initialise list to store dev names and loc
 devs = []
