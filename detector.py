@@ -1,8 +1,8 @@
 import subprocess
 
 # get annotate of specified file
-repo_path = "cd /Users/oisin/Desktop/Forth-Year/FYP/extracted-repos/html5-boilerplate"
-file_name = ".eslintrc.js"
+repo_path = "cd /Users/oisin/Desktop/Forth-Year/FYP/extracted-repos/mynetworks"
+file_name = "regional.py"
 command = repo_path + " && git annotate " + file_name
 annotation = subprocess.check_output(command, shell=True).decode('utf-8')
 
@@ -19,7 +19,7 @@ def line_is_valid(codeline):
         # closed brackets on the first char are delt with above. Otherwise check if the
         # current char is empty, if so check the next char, if not empty, if it is a closed 
         # bracket then return false, otherwise move to next check
-        for i in range(len(codeline)):
+        for i in range(len(codeline) - 1):
             if codeline[i] == " ":
                 if codeline[i + 1] == "}" or codeline[i + 1] == "]" or codeline[i + 1] == ")":
                     return False
@@ -30,6 +30,7 @@ def line_is_valid(codeline):
     # otherwise it's good
     return True
 
+# MAIN ### MAIN ### MAIN ### MAIN ### MAIN ### MAIN ### MAIN ### MAIN
 # initialise list to store dev names and loc
 devs = []
 for i in range(len(segannotate) - 1):
@@ -54,6 +55,14 @@ for i in range(len(segannotate) - 1):
                 #if not, create a new name with a single loc
                 elif j == len(devs) - 1:
                     devs.append((name, 1))
+                    
+# function to make sorting function usable                   
+def takeSecond(elem):
+    return elem[1]
 
+# print based on loc
+devs.sort(reverse=True, key=takeSecond)
+rank = 1
 for name, number in devs:
-    print(name, number)
+    print(rank, name, number)
+    rank += 1
