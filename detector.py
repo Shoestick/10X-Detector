@@ -22,6 +22,58 @@ def line_is_valid(codeline):
     # otherwise it's good
     return True
 
+# calulate dev score
+def get_score(devs, repo_path):
+    #
+    # calculation: (loc * avg_commits) / num_commits 
+    #
+    command = "cd " + repo_path[2:] + " && git shortlog -sn --all"
+    annotation = subprocess.check_output(command, shell=True).decode('utf-8')
+
+    # split paragraph string into lines
+    segannotate = annotation.split("\n")
+    total_commits = 0
+    # split lines into usable chunks
+    for i in range(len(segannotate) - 1):
+        word = segannotate[i].split("\t")
+        num_commits = word[0]
+        name = word[1]
+        for j in range(len(devs)):
+            # check if new name has appeared on the devs list,
+            if devs[j][0] == name:
+                # add the num of commits to the total_commits
+                total_commits += int(num_commits)
+                loc = devs[j][1]
+                # append the number of commits by the dev to a new list beside it
+                devs[j] = (name, loc, int(num_commits))
+                break
+
+    # get average number of commits per person
+    avg_commits = total_commits // len(devs)
+
+    for j in range(len(devs)):
+        # use num_commits and loc to give a score to each name
+        name = devs[j][0]
+        loc = devs[j][1]
+        num_commits = devs[j][2]
+        score = loc / (num_commits / avg_commits)
+        devs[j] = (name, score, loc)
+        
+# function to make sorting function usable                   
+def takeSecond(elem):
+    return elem[1]
+
+# print rank, name and score of every dev
+def print_rank(devs):
+    # print based on loc
+    devs.sort(reverse=True, key=takeSecond)
+    rank = 1
+    print("\n[PRINTING] Printing according to rank, name and score\n")
+    for name, number, loc in devs:
+        print(rank, name, number, loc)
+        rank += 1
+    print("\n[END]")
+
 # initialise list to store dev names and loc
 devs = []
 
@@ -52,32 +104,26 @@ for root, dirs, files in os.walk(repo_path, topdown=True):
                 if line_is_valid(codeline[1]):
                     # get name from line
                     name = word[1][1:]
+                    # erase blank first characters
+                    while name[0] == " ":
+                        name = name[1:]
                     # deal with exception
                     if len(devs) == 0:
-                        devs.append((name, 1))
+                        devs.append((name, 1, 0))
                     else:
                         for j in range(len(devs)):
                             # check to see if name is already on the list, if so +1
                             if devs[j][0] == name:
                                 loc = devs[j][1]
                                 loc += 1
-                                devs[j] = (name, loc)
+                                devs[j] = (name, loc, 0)
                                 break
                             #if not, create a new name with a single loc
                             elif j == len(devs) - 1:
-                                devs.append((name, 1))
+                                devs.append((name, 1, 0))
                                 
             print("[SUCCESS]", filename, "was successfully processed")
-                    
-# function to make sorting function usable                   
-def takeSecond(elem):
-    return elem[1]
 
-# print based on loc
-devs.sort(reverse=True, key=takeSecond)
-rank = 1
-print("\n[PRINTING] Printing according to rank, name and loc")
-for name, number in devs:
-    print(rank, name, number)
-    rank += 1
-print("[END]")
+get_score(devs, repo_path)
+    
+print_rank(devs)

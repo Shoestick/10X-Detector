@@ -11,4 +11,4 @@ for root, dirs, files in os.walk(repo_path, topdown=True):
         #print(filename, "SUCCESS")
         if not filename[-4:] == '.png' and not filename[-4:] == '.svg' and not filename[-4:] == '.ico': # add '.jpg', 'jpeg', '.tif'
             command = cd_repo + root[54:] + " && git annotate " + filename
-            print(command)
+            print(cd_repo + root[54:])
