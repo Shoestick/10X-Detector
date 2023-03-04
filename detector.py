@@ -3,21 +3,26 @@ import os
 
 # various checks to see if the code actually contributed anything
 def line_is_valid(codeline):
-    # check if the line is empty or is just a close bracket
-    if codeline == "" or codeline[0] == "}" or codeline[0] == "]" or codeline[0] == ")":
+    j = 0 # will be pos in string of first none space character
+    # to see if the line contains anything
+    if codeline == "":
         return False
-    # check if the line is just an close bracket
+    # to see if the line is longer than 2 none space characters
+    # also to see if line has any none space characters
     else:
-        # closed brackets on the first char are delt with above. Otherwise check if the
-        # current char is empty, if so check the next char, if not empty, if it is a closed 
-        # bracket then return false, otherwise move to next check
-        for i in range(len(codeline) - 1):
-            if codeline[i] == " ":
-                if codeline[i + 1] == "}" or codeline[i + 1] == "]" or codeline[i + 1] == ")":
+        for i in range(len(codeline)):
+            if codeline[i] != " ":
+                if i + 3 > len(codeline):
                     return False
-                elif codeline[i + 1] != " ":
+                else:
+                    j = i
                     break
-    # check to see if the line is a comment
+            elif i + 3 > len(codeline):
+                return False
+    # check to see if the line is a single line comment
+    if codeline[j] == "#" or (codeline[j] == "/" and codeline[j + 1] == "/"):
+        return False
+    # check for multiline comments
     # check to see if the line is boilerplate
     # otherwise it's good
     return True
