@@ -42,21 +42,42 @@ def day_difference(timestamp):
     
     return delta.days
     
+# get the additions of each programmer and 
+def get_additions(devs, repo_path):
+    for i in range(len(devs)):
+        command = "cd "+ repo_path[2:] + " && git log --author=\"" + devs[i][0] +"\" --format=tformat: --numstat"
+        numstats = subprocess.check_output(command, shell=True).decode('utf-8')
+        numstats_lines = numstats.split("\n")
+        total_additions = 0
+        for j in range(len(numstats_lines) - 1):
+            numstats_split = numstats_lines[j].split("\t")
+            addition = numstats_split[0]
+            if addition != "-":
+                total_additions += int(addition)
+        name = devs[i][0]
+        loc = devs[i][1]
+        age_score = devs[i][2]
+        devs[i] = (name, loc, age_score, total_additions)
+        print("[SUCCESS]", name, "was successfully processed")
+    
 # calulate dev score
-def get_score(devs, repo_path):
+def get_score(devs, h_a_s, hloc):
     #
-    # calculation: loc + ((total age of all lines)^2 / x)
+    # calculation: 50*((loc / highest_loc) + (age_score / highest_age_score))
     #
     for j in range(len(devs)):
         # use num_commits and loc to give a score to each name
         name = devs[j][0]
         loc = devs[j][1]
-        total_line_age = devs[j][2]
+        age_score = devs[j][2]
+        additions = devs[j][3]
         
-        a = loc
-        b = total_line_age
+        a = loc /hloc
+        b = age_score / h_a_s
+        if additions != 0:
+            c = (loc * age_score) / additions # age score is inversly proportional to c, as I care less that their loc is small compared to additions if they have a large age score
         
-        score = 0*a + 1*b
+        score = 50*a + 50*b + 0*c
         
         devs[j] = (name, score, loc)
         
@@ -73,12 +94,14 @@ def print_rank(devs):
     for name, number, loc in devs:
         print(rank, name, number, loc)
         rank += 1
+        if rank > 50:
+            break
     print("\n[END]")
 
-devs = [] # initialise list to store devs
+devs = [] # initialise list to store devs, pre 'get_score' is currently "Name, loc, age_score, total_additions"
 oldest_line = 0 # the oldest line of code
 highest_age_score = 0
-AGE_FACTOR = 10 # how important the age of a line is pow(age of line, AGE_FACTOR)
+AGE_FACTOR = 3 # 2^AGE_FACTOR == how much more important a line is if it's twice as old as another
 
 # get annotate of specified file
 repo_path = "C:/Users/oisin/Desktop/Forth-Year/FYP/extracted-repos/html5-boilerplate"
@@ -90,7 +113,8 @@ for root, dirs, files in os.walk(repo_path, topdown=True):
     dirs[:] = [d for d in dirs if d not in exclude]
     for filename in files:
         if (not filename[-4:] == '.ico' and not filename[-4:] == '.svg' and not filename[-4:] == '.png' and
-            not filename[-4:] == '.jpg' and not filename[-4:] == 'jpeg' and not filename[-4:] == '.tif'):
+            not filename[-4:] == '.jpg' and not filename[-4:] == 'jpeg' and not filename[-4:] == '.tif' and
+            not filename[-4:] == '.txt' and not filename[-3:] == '.md'):
             #print("[PROCESSING]", filename)
             command = cd_repo + root[54:] + " && git annotate " + filename
             annotation = subprocess.check_output(command, shell=True).decode('utf-8')
@@ -117,7 +141,8 @@ for root, dirs, files in os.walk(repo_path, topdown=True):
                         name = name[1:]
                     # deal with exception
                     if len(devs) == 0:
-                        devs.append((name, 1, pow(codeline_age, AGE_FACTOR)))
+                        codeline_age_score = pow(codeline_age, AGE_FACTOR)
+                        devs.append((name, 1, codeline_age_score, 0))
                     else:
                         for j in range(len(devs)):
                             # check to see if name is already on the list, if so +1
@@ -127,17 +152,28 @@ for root, dirs, files in os.walk(repo_path, topdown=True):
                                 
                                 codeline_age_score = devs[j][2]
                                 codeline_age_score = codeline_age_score + pow(codeline_age, AGE_FACTOR)
-                                if codeline_age_score > highest_age_score:
-                                    highest_age_score = codeline_age_score
                                 
-                                devs[j] = (name, loc, codeline_age_score)
+                                devs[j] = (name, loc, codeline_age_score, 0)
                                 break
                             #if not, create a new name with a single loc
                             elif j == len(devs) - 1:
-                                devs.append((name, 1, pow(codeline_age, AGE_FACTOR)))
+                                codeline_age_score = pow(codeline_age, AGE_FACTOR)
+                                devs.append((name, 1, codeline_age_score, 0))
                                 
             print("[SUCCESS]", filename, "was successfully processed")
+            
+get_additions(devs, repo_path)
 
-get_score(devs, repo_path)
+highest_age_score = 0
+highest_loc = 0
+for i in range(len(devs)):
+    loc = devs[i][1]
+    codeline_age_score = devs[i][2]
+    if loc > highest_loc:
+        highest_loc = loc
+    if codeline_age_score > highest_age_score:
+        highest_age_score = codeline_age_score
+
+get_score(devs, highest_age_score, highest_loc)
     
 print_rank(devs)
