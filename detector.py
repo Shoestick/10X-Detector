@@ -76,22 +76,26 @@ def authors_oldest_commit(oldest_commit, name):
     return 0
     
 # get the additions of each programmer and 
-def get_additions(devs, repo_path):
+def get_additions_deletions(devs, repo_path):
     for i in range(len(devs)):
         command = "cd "+ repo_path[2:] + " && git log --author=\"" + devs[i][0] +"\" --format=tformat: --numstat"
         numstats = subprocess.check_output(command, shell=True).decode('utf-8')
         numstats_lines = numstats.split("\n")
         total_additions = 0
+        total_deletions = 0
         for j in range(len(numstats_lines) - 1):
             numstats_split = numstats_lines[j].split("\t")
             addition = numstats_split[0]
             if addition != "-":
                 total_additions += int(addition)
+            deletion = numstats_split[1]
+            if deletion != "-":
+                total_deletions += int(addition)
         name = devs[i][0]
         loc = devs[i][1]
         age_score = devs[i][2]
-        oldest = devs[i][4]
-        devs[i] = (name, loc, age_score, total_additions, oldest)
+        new_boost = devs[i][4]
+        devs[i] = (name, loc, age_score, total_additions, new_boost, total_deletions)
         print("[SUCCESS]", name, "was successfully processed")
     
 # calulate dev score
@@ -106,15 +110,17 @@ def get_score(devs, h_a_s, hloc, h_boost):
         age_score = devs[j][2]
         additions = devs[j][3]
         new_boost = devs[j][4]
+        deletions = devs[j][5]
         
         a = loc /hloc
         b = age_score / h_a_s
         if additions != 0:
             c = (loc * age_score) / additions # age score is inversly proportional to c, as I care less that their loc is small compared to additions if they have a large age score
         d = pow(new_boost, BOOST_FACTOR) / pow(h_boost, BOOST_FACTOR)
-        score = 30*a + 40*b + 0*c + 30*d
+        e = deletions
+        score = 25*a + 25*b + 0*c + 25*d + 25*e
         
-        devs[j] = (name, score, new_boost )
+        devs[j] = (name, score, deletions)
         
 # function to make sorting function usable                   
 def takeSecond(elem):
@@ -154,8 +160,8 @@ for root, dirs, files in os.walk(repo_path, topdown=True):
     dirs[:] = [d for d in dirs if d not in exclude]
     for filename in files:
         if (not filename[-4:] == '.ico' and not filename[-4:] == '.svg' and not filename[-4:] == '.png' and
-            not filename[-4:] == '.jpg' and not filename[-4:] == 'jpeg' and not filename[-4:] == '.tif' and
-            not filename[-4:] == '.txt' and not filename[-3:] == '.md'):
+            not filename[-4:] == '.jpg' and not filename[-4:] == 'jpeg' and not filename[-4:] == '.tif'):# and
+            #not filename[-4:] == '.txt' and not filename[-3:] == '.md'):
             #print("[PROCESSING]", filename)
             command = "cd " + repo_path[2:54] + root[54:] + " && git annotate " + filename
             annotation = subprocess.check_output(command, shell=True).decode('utf-8')
@@ -216,7 +222,7 @@ for root, dirs, files in os.walk(repo_path, topdown=True):
                                 devs.append((name, 1, codeline_age_score, 0, new_boost, days_oldest_commit))
                                 
             print("[SUCCESS]", filename, "was successfully processed")
-get_additions(devs, repo_path)
+get_additions_deletions(devs, repo_path)
 
 highest_age_score = 0
 highest_loc = 0
