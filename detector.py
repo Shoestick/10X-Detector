@@ -2,6 +2,30 @@ import subprocess
 import os
 from datetime import date
 
+# get the oldest commit an author has contributed
+def get_oldest_commit(oldest_commit, cd_repo):
+    command = cd_repo + " && git log --pretty=format:\"%an%x09%ad\" --date=format:\"%Y-%m-%d\""
+    annotation = subprocess.check_output(command, shell=True).decode('utf-8')
+
+    segannotate = annotation.split("\n")
+    for i in range(len(segannotate)):
+        word = segannotate[i].split("\t")
+        name = word[0]
+        day_diff = day_difference(word[1])
+        
+        if len(oldest_commit) == 0:
+            oldest_commit.append((name, day_diff))
+        else:
+            for j in range(len(oldest_commit)):
+                # check to see if name is already on the list, if so +1
+                if oldest_commit[j][0] == name:
+                    if oldest_commit[j][1] < day_diff:
+                        oldest_commit[j] = (name, day_diff)
+                    break
+                #if not, create a new name with a single loc
+                elif j == len(oldest_commit) - 1:
+                    oldest_commit.append((name, day_diff))
+
 # various checks to see if the code actually contributed anything
 def line_is_valid(codeline):
     j = 0 # will be pos in string of first none space character
@@ -59,6 +83,7 @@ def get_additions(devs, repo_path):
         age_score = devs[i][2]
         devs[i] = (name, loc, age_score, total_additions)
         print("[SUCCESS]", name, "was successfully processed")
+    print("[COMPLETE] All authors processed")
     
 # calulate dev score
 def get_score(devs, h_a_s, hloc):
@@ -99,24 +124,28 @@ def print_rank(devs):
     print("\n[END]")
 
 devs = [] # initialise list to store devs, pre 'get_score' is currently "Name, loc, age_score, total_additions"
-oldest_line = 0 # the oldest line of code
+oldest_commit = []
+#oldest_line = 0 # the oldest line of code
 highest_age_score = 0
 AGE_FACTOR = 3 # 2^AGE_FACTOR == how much more important a line is if it's twice as old as another
 
 # get annotate of specified file
-repo_path = "C:/Users/oisin/Desktop/Forth-Year/FYP/extracted-repos/html5-boilerplate"
-cd_repo = "cd " + repo_path[2:54]
+repo_path = "C:/Users/oisin/Desktop/Forth-Year/FYP/extracted-repos/example"
 
 print("[START]")
-exclude = set(['.git'])
+
+get_oldest_commit(oldest_commit, "cd " + repo_path[2:])
+
+#get blame
+exclude = set(['.git', '.gitlab', '.github'])
 for root, dirs, files in os.walk(repo_path, topdown=True):
     dirs[:] = [d for d in dirs if d not in exclude]
     for filename in files:
         if (not filename[-4:] == '.ico' and not filename[-4:] == '.svg' and not filename[-4:] == '.png' and
-            not filename[-4:] == '.jpg' and not filename[-4:] == 'jpeg' and not filename[-4:] == '.tif' and
-            not filename[-4:] == '.txt' and not filename[-3:] == '.md'):
+            not filename[-4:] == '.jpg' and not filename[-4:] == 'jpeg' and not filename[-4:] == '.tif'): #and
+            #not filename[-4:] == '.txt' and not filename[-3:] == '.md'):
             #print("[PROCESSING]", filename)
-            command = cd_repo + root[54:] + " && git annotate " + filename
+            command = "cd " + repo_path[2:54] + root[54:] + " && git annotate " + filename
             annotation = subprocess.check_output(command, shell=True).decode('utf-8')
 
             # split paragraph string into lines
@@ -132,8 +161,8 @@ for root, dirs, files in os.walk(repo_path, topdown=True):
                     # get age of line of code in days
                     codeline_age = day_difference(word[2])
                     # see if it's the oldest loc
-                    if codeline_age > oldest_line:
-                        oldest_line = codeline_age
+                    #if codeline_age > oldest_line:
+                        #oldest_line = codeline_age
                     # get name from line
                     name = word[1][1:]
                     # erase blank first characters
@@ -161,7 +190,7 @@ for root, dirs, files in os.walk(repo_path, topdown=True):
                                 devs.append((name, 1, codeline_age_score, 0))
                                 
             print("[SUCCESS]", filename, "was successfully processed")
-            
+    print("[COMPLETE] All files processed")
 get_additions(devs, repo_path)
 
 highest_age_score = 0
