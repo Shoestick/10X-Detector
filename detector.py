@@ -135,16 +135,15 @@ def get_score(devs, hloc, h_a_s, hadditions, h_boost, hdeletions):
         deletions = devs[j][5]
         
         a = loc / hloc
-        b = age_score * 10 / h_a_s
-        c = 1
+        b = age_score / h_a_s
         if additions != 0:
             c = (loc * b) / additions # age score is inversly proportional to c, as I care less that their loc is small compared to additions if they have a large age score
         d = pow(new_boost, BOOST_FACTOR) / pow(h_boost, BOOST_FACTOR)
         e = additions / hadditions
         f = deletions / hdeletions
-        score = 100*a + 0*b + 0*c + 0*d + 0*e + 0*f
+        score = 16*a + 16*b + 16*c + 16*d + 16*e + 16*f
         
-        devs[j] = (name, round(score, 3), round(loc, 2), round(10*b, 2), round(10*c, 2), round(10*d, 2), round(10*e, 2), round(10*f, 2))
+        devs[j] = (name, round(score, 3), round(10*a, 2), round(10*b, 2), round(10*c, 2), round(10*d, 2), round(10*e, 2), round(10*f, 2))
         
 # function to make sorting function usable                   
 def takeSecond(elem):
@@ -157,7 +156,7 @@ def print_rank(devs):
     rank = 1
     print("\n[PRINTING] Printing according to rank, name and score\n")
     for name, score, a, b, c, d, e, f in devs:
-        print(rank, name, score, "|", a)#, b, c, d, e, f)
+        print(rank, name, score, "|", a, b, c, d, e, f)
         rank += 1
         if rank > 50:
             break
@@ -258,22 +257,18 @@ highest_additions = 1
 highest_new_boost = 1
 highest_deletions = 1
 
+def highest(i, test_condition, highest_test):
+    test = devs[i][test_condition]
+    if test > highest_test:
+        return test
+    return highest_test
+    
 for i in range(len(devs)):
-    loc = devs[i][1]
-    codeline_age_score = devs[i][2]
-    additions = devs[i][3]
-    new_boost = devs[i][4]
-    deletions = devs[i][5]
-    if loc > highest_loc:
-        highest_loc = loc
-    if codeline_age_score > highest_age_score:
-        highest_age_score = codeline_age_score
-    if additions > highest_additions:
-        highest_additions = additions
-    if new_boost > highest_new_boost:
-        highest_new_boost = new_boost
-    if deletions > highest_deletions:
-        highest_deletions = deletions
+    highest_loc = highest(i, 1, highest_loc)
+    highest_age_score = highest(i, 2, highest_age_score)
+    highest_additions = highest(i, 3, highest_additions)
+    highest_new_boost = highest(i, 4, highest_new_boost)
+    highest_deletions = highest(i, 5, highest_deletions)
 
 get_score(devs, highest_loc, highest_age_score, highest_additions, highest_new_boost, highest_deletions)
     
