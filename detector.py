@@ -65,6 +65,28 @@ def day_difference(timestamp):
     delta = today - commit_date
     
     return delta.days
+
+# assigns value according to codeline complexity on average
+def get_code_factor(ftype):
+    vlow = set(['txt', 'md'])
+    low = set(['css', 'html', 'xml', 'json'])
+    middling = set(['js', 'java', 'cs', 'rb', 'py', 'kt'])
+    high = set(['c', 'cpp', 'cc', 'h', 'hh'])
+    vhigh = set(['rs', 'go', 'hs', 'lhs', '.ex'])
+    
+    # ordered by which it's most likely to be
+    if(ftype in middling):
+        return 1
+    elif(ftype in high):
+        return 1.3
+    elif(ftype in low):
+        return 0.1
+    elif(ftype in vlow):
+        return 0.05
+    elif(ftype in vhigh):
+        return 1.6
+    
+    return 1
     
 # takes in oldest_commit and name, and return how old the oldest commit of that author is
 def authors_oldest_commit(oldest_commit, name):
@@ -99,9 +121,9 @@ def get_additions_deletions(devs, repo_path):
         print("[SUCCESS]", name, "was successfully processed")
     
 # calulate dev score
-def get_score(devs, h_a_s, hloc, h_boost):
+def get_score(devs, hloc, h_a_s, hadditions, h_boost, hdeletions):
     #
-    # calculation: 50*((loc / highest_loc) + (age_score / highest_age_score))
+    # calculation: 
     #
     for j in range(len(devs)):
         # use num_commits and loc to give a score to each name
@@ -112,15 +134,17 @@ def get_score(devs, h_a_s, hloc, h_boost):
         new_boost = devs[j][4]
         deletions = devs[j][5]
         
-        a = loc /hloc
-        b = age_score / h_a_s
+        a = loc / hloc
+        b = age_score * 10 / h_a_s
+        c = 1
         if additions != 0:
-            c = (loc * age_score) / additions # age score is inversly proportional to c, as I care less that their loc is small compared to additions if they have a large age score
+            c = (loc * b) / additions # age score is inversly proportional to c, as I care less that their loc is small compared to additions if they have a large age score
         d = pow(new_boost, BOOST_FACTOR) / pow(h_boost, BOOST_FACTOR)
-        e = deletions
-        score = 25*a + 25*b + 0*c + 25*d + 25*e
+        e = additions / hadditions
+        f = deletions / hdeletions
+        score = 100*a + 0*b + 0*c + 0*d + 0*e + 0*f
         
-        devs[j] = (name, score, deletions)
+        devs[j] = (name, round(score, 3), round(loc, 2), round(10*b, 2), round(10*c, 2), round(10*d, 2), round(10*e, 2), round(10*f, 2))
         
 # function to make sorting function usable                   
 def takeSecond(elem):
@@ -132,17 +156,18 @@ def print_rank(devs):
     devs.sort(reverse=True, key=takeSecond)
     rank = 1
     print("\n[PRINTING] Printing according to rank, name and score\n")
-    for name, number, loc in devs:
-        print(rank, name, number, loc)
+    for name, score, a, b, c, d, e, f in devs:
+        print(rank, name, score, "|", a)#, b, c, d, e, f)
         rank += 1
         if rank > 50:
             break
     print("\n[END]")
 
-devs = [] # initialise list to store devs, pre 'get_score' is currently "Name, loc, age_score, total_additions"
+devs = [] # initialise list to store devs, pre 'get_score' is currently "Name, code_score, age_score, total_additions, new_boost, deletions"
 oldest_commit = []
 #oldest_line = 0 # the oldest line of code
 highest_age_score = 0
+
 AGE_FACTOR = 3 # 2^AGE_FACTOR == how much more important a line is if it's twice as old as another
 NEW_BOOST_PERIOD = 365 // 2
 BOOST_FACTOR = 1.5
@@ -156,16 +181,20 @@ get_oldest_commit(oldest_commit, "cd " + repo_path[2:])
 
 #get blame
 exclude = set(['.git', '.gitlab', '.github'])
+exclude_file = set(['ico', 'svg', 'png', 'jpg', 'jpeg', 'tif', 'woff', 'woff2', 
+                    'ttf', 'bin', 'zip', 'tar', 'gz', 'webp'])
 for root, dirs, files in os.walk(repo_path, topdown=True):
     dirs[:] = [d for d in dirs if d not in exclude]
     for filename in files:
-        if (not filename[-4:] == '.ico' and not filename[-4:] == '.svg' and not filename[-4:] == '.png' and
-            not filename[-4:] == '.jpg' and not filename[-4:] == 'jpeg' and not filename[-4:] == '.tif'):# and
-            #not filename[-4:] == '.txt' and not filename[-3:] == '.md'):
-            #print("[PROCESSING]", filename)
+        # to get the file type
+        temp = filename.split('.')
+        for i in range(len(temp)):
+            ftype = temp[i]
+        if not (ftype in exclude_file): # text file types
+            print("[PROCESSING] Processing ", filename)
             command = "cd " + repo_path[2:54] + root[54:] + " && git annotate " + filename
             annotation = subprocess.check_output(command, shell=True).decode('utf-8')
-
+            
             # split paragraph string into lines
             segannotate = annotation.split("\n")
 
@@ -178,34 +207,32 @@ for root, dirs, files in os.walk(repo_path, topdown=True):
                 if line_is_valid(codeline[1]):
                     # get age of line of code in days
                     codeline_age = day_difference(word[2])
-                    # see if it's the oldest loc
-                    #if codeline_age > oldest_line:
-                        #oldest_line = codeline_age
                     # get name from line
                     name = word[1][1:]
                     # erase blank first characters
                     while name[0] == " ":
                         name = name[1:]
+                    code_factor = get_code_factor(ftype)
                     # deal with exception
                     if len(devs) == 0:
                         codeline_age_score = pow(codeline_age, AGE_FACTOR)
                         new_boost = 0
                         days_oldest_commit = authors_oldest_commit(oldest_commit, name)
                         if (days_oldest_commit - NEW_BOOST_PERIOD) < codeline_age:
-                            new_boost = 1
+                            new_boost = code_factor
                     
-                        devs.append((name, 1, codeline_age_score, 0, new_boost, days_oldest_commit))
+                        devs.append((name, code_factor, codeline_age_score, 0, new_boost, days_oldest_commit))
                     else:
                         for j in range(len(devs)):
                             # check to see if name is already on the list, if so +1
                             if devs[j][0] == name:
                                 loc = devs[j][1]
-                                loc += 1
+                                loc += code_factor
                                 
                                 days_oldest_commit = devs[j][5]
                                 new_boost = devs[j][4]
                                 if (days_oldest_commit - NEW_BOOST_PERIOD) < codeline_age:
-                                    new_boost += 1
+                                    new_boost += code_factor
                                 
                                 codeline_age_score = devs[j][2]
                                 codeline_age_score = codeline_age_score + pow(codeline_age, AGE_FACTOR)
@@ -218,26 +245,36 @@ for root, dirs, files in os.walk(repo_path, topdown=True):
                                 new_boost = 0
                                 days_oldest_commit = authors_oldest_commit(oldest_commit, name)
                                 if (days_oldest_commit - NEW_BOOST_PERIOD) < codeline_age:
-                                    new_boost = 1
-                                devs.append((name, 1, codeline_age_score, 0, new_boost, days_oldest_commit))
+                                    new_boost = code_factor
+                                devs.append((name, code_factor, codeline_age_score, 0, new_boost, days_oldest_commit))
                                 
             print("[SUCCESS]", filename, "was successfully processed")
+
 get_additions_deletions(devs, repo_path)
 
-highest_age_score = 0
-highest_loc = 0
-highest_new_boost = 0
+highest_age_score = 1
+highest_loc = 1
+highest_additions = 1
+highest_new_boost = 1
+highest_deletions = 1
+
 for i in range(len(devs)):
     loc = devs[i][1]
     codeline_age_score = devs[i][2]
+    additions = devs[i][3]
     new_boost = devs[i][4]
+    deletions = devs[i][5]
     if loc > highest_loc:
         highest_loc = loc
     if codeline_age_score > highest_age_score:
         highest_age_score = codeline_age_score
+    if additions > highest_additions:
+        highest_additions = additions
     if new_boost > highest_new_boost:
         highest_new_boost = new_boost
+    if deletions > highest_deletions:
+        highest_deletions = deletions
 
-get_score(devs, highest_age_score, highest_loc, highest_new_boost)
+get_score(devs, highest_loc, highest_age_score, highest_additions, highest_new_boost, highest_deletions)
     
 print_rank(devs)
