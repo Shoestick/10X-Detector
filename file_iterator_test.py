@@ -27,3 +27,24 @@ for i in range(len(devs)):
     # turn those nums to ints and add them up
     #compare with github to see if it's about right
     
+    command = "cd " + repo_path[2:] + " && git shortlog -sn --all"
+    annotation = subprocess.check_output(command, shell=True).decode('utf-8')
+
+    # split paragraph string into lines
+    segannotate = annotation.split("\n")
+    total_commits = 0
+    # split lines into usable chunks
+    for i in range(len(segannotate) - 1):
+        word = segannotate[i].split("\t")
+        num_commits = word[0]
+        name = word[1]
+        for j in range(len(devs)):
+            # check if new name has appeared on the devs list,
+            if devs[j][0] == name:
+                # add the num of commits to the total_commits
+                total_commits += int(num_commits)
+                loc = devs[j][1]
+                # append the number of commits by the dev to a new list beside it
+                devs[j] = (name, loc, int(num_commits))
+                break
+    

@@ -69,8 +69,8 @@ def day_difference(timestamp):
 # assigns value according to codeline complexity on average
 def get_code_factor(ftype):
     vlow = set(['txt', 'md'])
-    low = set(['css', 'html', 'xml', 'json'])
-    middling = set(['js', 'java', 'cs', 'rb', 'py', 'kt'])
+    low = set(['css', 'html', 'xml', 'json', 'yaml'])
+    middling = set(['js', 'java', 'cs', 'rb', 'py', 'kt', 'ts'])
     high = set(['c', 'cpp', 'cc', 'h', 'hh'])
     vhigh = set(['rs', 'go', 'hs', 'lhs', '.ex'])
     
@@ -119,6 +119,32 @@ def get_additions_deletions(devs, repo_path):
         new_boost = devs[i][4]
         devs[i] = (name, loc, age_score, total_additions, new_boost, total_deletions)
         print("[SUCCESS]", name, "was successfully processed")
+        
+def get_commits(devs, repo_path):
+    command = "cd " + repo_path[2:] + " && git shortlog -sn --all"
+    annotation = subprocess.check_output(command, shell=True).decode('utf-8')
+
+    # split paragraph string into lines
+    segannotate = annotation.split("\n")
+    total_commits = 0
+    # split lines into usable chunks
+    for i in range(len(segannotate) - 1):
+        word = segannotate[i].split("\t")
+        num_commits = word[0]
+        name = word[1]
+        for j in range(len(devs)):
+            # check if new name has appeared on the devs list,
+            if devs[j][0] == name:
+                # add the num of commits to the total_commits
+                total_commits += int(num_commits)
+                loc = devs[j][1]
+                age_score = devs[j][2]
+                additions = devs[j][3]
+                new_boost = devs[j][4]
+                deletions = devs[j][5]
+                # append the number of commits by the dev to a new list beside it
+                devs[j] = (name, loc, age_score, additions, new_boost, deletions, int(num_commits))
+                break
     
 # calulate dev score
 def get_score(devs, hloc, h_a_s, hadditions, h_boost, hdeletions):
@@ -133,6 +159,7 @@ def get_score(devs, hloc, h_a_s, hadditions, h_boost, hdeletions):
         additions = devs[j][3]
         new_boost = devs[j][4]
         deletions = devs[j][5]
+        commits = devs[j][6]
         
         a = loc / hloc
         b = age_score / h_a_s
@@ -141,9 +168,10 @@ def get_score(devs, hloc, h_a_s, hadditions, h_boost, hdeletions):
         d = pow(new_boost, BOOST_FACTOR) / pow(h_boost, BOOST_FACTOR)
         e = additions / hadditions
         f = deletions / hdeletions
-        score = 16*a + 16*b + 16*c + 16*d + 16*e + 16*f
+        g = age_score / commits
+        score = 0*a + 0*b + 0*c + 0*d + 0*e + 0*f + 1*g
         
-        devs[j] = (name, round(score, 3), round(10*a, 2), round(10*b, 2), round(10*c, 2), round(10*d, 2), round(10*e, 2), round(10*f, 2))
+        devs[j] = (name, round(score, 3), round(10*a, 2), round(10*b, 2), round(10*c, 2), round(10*d, 2), round(10*e, 2), round(10*f, 2), round(g, 2))
         
 # function to make sorting function usable                   
 def takeSecond(elem):
@@ -155,8 +183,8 @@ def print_rank(devs):
     devs.sort(reverse=True, key=takeSecond)
     rank = 1
     print("\n[PRINTING] Printing according to rank, name and score\n")
-    for name, score, a, b, c, d, e, f in devs:
-        print(rank, name, score, "|", a, b, c, d, e, f)
+    for name, score, a, b, c, d, e, f, g in devs:
+        print(rank, name, score, "|", g)
         rank += 1
         if rank > 50:
             break
@@ -250,6 +278,7 @@ for root, dirs, files in os.walk(repo_path, topdown=True):
             print("[SUCCESS]", filename, "was successfully processed")
 
 get_additions_deletions(devs, repo_path)
+get_commits(devs, repo_path)
 
 highest_age_score = 1
 highest_loc = 1
