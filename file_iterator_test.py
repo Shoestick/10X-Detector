@@ -1,50 +1,77 @@
-import os
 import subprocess
 
+# assigns value according to codeline complexity on average
+def get_code_factor(ftype):
+    vlow = set(['txt', 'md'])
+    low = set(['css', 'html', 'xml', 'json', 'yaml'])
+    middling = set(['js', 'java', 'cs', 'rb', 'py', 'kt', 'ts'])
+    high = set(['c', 'cpp', 'cc', 'h', 'hh'])
+    vhigh = set(['rs', 'go', 'hs', 'lhs', '.ex'])
+    
+    # ordered by which it's most likely to be
+    if(ftype in middling):
+        return 1
+    elif(ftype in high):
+        return 1.3
+    elif(ftype in low):
+        return 0.1
+    elif(ftype in vlow):
+        return 0.05
+    elif(ftype in vhigh):
+        return 1.6
+    
+    return 1
+
  # get annotate of specified file
-repo_path = "C:/Users/oisin/Desktop/Forth-Year/FYP/extracted-repos/html5-boilerplate"
-cd_folder = "cd " + repo_path[2:54]
+repo_path = "C:/Users/oisin/Desktop/Forth-Year/FYP/extracted-repos/rspack"
 cd_repo = "cd " + repo_path[2:]
 
-devs = [("Paul Irish", 0, 0), ("Paul Irish", 0, 0), ("Rob Larsen", 0, 0)]
+command = cd_repo + " && git whatchanged"
+whatchanged = subprocess.check_output(command, shell=True).decode('utf-8')
 
-for i in range(len(devs)):
-    command = cd_repo + " && git log --author=\"" + devs[i][0] +"\" --format=tformat: --numstat"
-    numstats = subprocess.check_output(command, shell=True).decode('utf-8')
-    numstats_lines = numstats.split("\n")
-    total_additions = 0
-    for i in range(len(numstats_lines) - 1):
-        numstats_split = numstats_lines[i].split("\t")
-        addition = numstats_split[0]
-        if addition != "-":
-            total_additions += int(addition)
-    print (total_additions)
-    
-    #next thing to do is run the command and check it works
-    #see how to the output is outputted, like the one in the other file
-    #see how to split it
-    #split it and get the first column
-    # turn those nums to ints and add them up
-    #compare with github to see if it's about right
-    
-    command = "cd " + repo_path[2:] + " && git shortlog -sn --all"
-    annotation = subprocess.check_output(command, shell=True).decode('utf-8')
-
-    # split paragraph string into lines
-    segannotate = annotation.split("\n")
-    total_commits = 0
-    # split lines into usable chunks
-    for i in range(len(segannotate) - 1):
-        word = segannotate[i].split("\t")
-        num_commits = word[0]
-        name = word[1]
-        for j in range(len(devs)):
-            # check if new name has appeared on the devs list,
-            if devs[j][0] == name:
-                # add the num of commits to the total_commits
-                total_commits += int(num_commits)
-                loc = devs[j][1]
-                # append the number of commits by the dev to a new list beside it
-                devs[j] = (name, loc, int(num_commits))
-                break
-    
+line = whatchanged.split("\n")
+author = ""
+files_pcommit = 0
+files_pcommit_score = 0
+highest_files_pcommit_score = 0
+hfpcs = 0
+hfc = 0
+for i in range(500):#range(len(line) - 1):
+    if line[i] != "":
+        if line[i][0] == "A":
+            if author != "":
+                if files_pcommit_score / files_pcommit >= 0.52:
+                    print("files ->", files_pcommit, "score ->",round(files_pcommit_score, 4))
+                    #print("files_pcommit_score / 16 =", files_pcommit_score / 16)
+                    #print("(files_pcommit_score / 16) + 1 =", (files_pcommit_score / 16) + 1)
+                    #print("pow((files_pcommit_score / 16) + 1, files_pcommit) =", pow((files_pcommit_score / 16) + 1, files_pcommit))
+                    #print("pow ->", round(pow(files_pcommit_score / files_pcommit + 1, files_pcommit / 8 + 1), 4))
+                    final = round(pow(files_pcommit, files_pcommit_score / files_pcommit + 0.45), 4)
+                    if final > 50:
+                        final = 50
+                    print("pow->", final)
+                    print("------------")
+                    
+                    #final = round(pow(files_pcommit_score / files_pcommit + 1, files_pcommit / 8 + 1), 4)
+                    
+                    if final > highest_files_pcommit_score:
+                        highest_files_pcommit_score = final
+                        hfpcs = files_pcommit_score
+                        hfc = files_pcommit
+                    files_pcommit_score = 0
+                    files_pcommit = 0
+            
+            author = line[i][8:line[i].find("<") - 1]
+            #print(author)
+        elif line[i][0] == ":":
+            files_pcommit += 1
+            #print(line[i])
+            word = line[i].split(" ")
+            temp = word[4].split('.')
+            ftype = "?"
+            ftype = temp[len(temp) - 1]
+            #print(ftype, get_code_factor(ftype))
+            files_pcommit_score += (get_code_factor(ftype) + 1) / 2
+print("Highest: ", highest_files_pcommit_score)
+print("code score", round(hfpcs / hfc + 0.45, 3))
+print("no. files", hfc)

@@ -215,8 +215,7 @@ for root, dirs, files in os.walk(repo_path, topdown=True):
     for filename in files:
         # to get the file type
         temp = filename.split('.')
-        for i in range(len(temp)):
-            ftype = temp[i]
+        ftype = temp[len(temp) - 1]
         if not (ftype in exclude_file): # text file types
             print("[PROCESSING] Processing ", filename)
             command = "cd " + repo_path[2:54] + root[54:] + " && git annotate " + filename
