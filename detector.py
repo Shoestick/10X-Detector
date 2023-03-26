@@ -5,7 +5,7 @@ from datetime import date
 # get the oldest commit an author has contributed
 def get_oldest_commit(oldest_commit, cd_repo):
     command = cd_repo + " && git log --pretty=format:\"%an%x09%ad\" --date=format:\"%Y-%m-%d\""
-    annotation = subprocess.check_output(command, shell=True).decode('utf-8')
+    annotation = subprocess.check_output(command, shell=True).decode('utf-8', errors="replace")
 
     segannotate = annotation.split("\n")
     for i in range(len(segannotate)):
@@ -172,7 +172,7 @@ def get_score(devs, hloc, h_a_s, hadditions, h_boost, hdeletions):
         h = additions / commits
         score = 1*a + 0*b + 0*c + 0*d + 0*e + 0*f + 0*g
         
-        devs[j] = (name, round(score, 5), round(10*a, 5), round(10*b, 5), round(10*c, 5), round(10*d, 5), round(10*e, 5), round(10*f, 5), round(g, 5), round(h, 5))
+        devs[j] = (name, round(loc, 5), round(age_score, 5), round(additions, 5), round(deletions, 5), round(new_boost, 5), round(commits, 5))
         
 # function to make sorting function usable                   
 def takeSecond(elem):
@@ -195,51 +195,52 @@ def print_rank(devs):
 def print_order(devs):
     devs.sort(reverse=True, key=takeSecond)
     MAX_COUNTER = 50
+    print("----------NAMES---------")
     counter = 1
-    for name, score, a, b, c, d, e, f, g, h in devs:
+    for name, loc, age_score, additions, deletions, new_boost, commits in devs:
         print(name)
         counter += 1
         if counter > MAX_COUNTER:
             break
-    print("------------------score")
+    print("------------------code_score")
     counter = 1
-    for name, score, a, b, c, d, e, f, g, h in devs:
-        print(score)
+    for name, loc, age_score, additions, deletions, new_boost, commits in devs:
+        print(loc)
         counter += 1
         if counter > MAX_COUNTER:
             break
-    print("------------------a")
+    print("------------------age_score")
     counter = 1
-    for name, score, a, b, c, d, e, f, g, h in devs:
-        print(a)
+    for name, loc, age_score, additions, deletions, new_boost, commits in devs:
+        print(age_score)
         counter += 1
         if counter > MAX_COUNTER:
             break
-    print("------------------b")
+    print("------------------additions")
     counter = 1
-    for name, score, a, b, c, d, e, f, g, h in devs:
-        print(b)
+    for name, loc, age_score, additions, deletions, new_boost, commits in devs:
+        print(additions)
         counter += 1
         if counter > MAX_COUNTER:
             break
-    print("------------------d")
+    print("------------------deletions")
     counter = 1
-    for name, score, a, b, c, d, e, f, g, h in devs:
-        print(d)
+    for name, loc, age_score, additions, deletions, new_boost, commits in devs:
+        print(deletions)
         counter += 1
         if counter > MAX_COUNTER:
             break
-    print("------------------e")
+    print("------------------new_boost")
     counter = 1
-    for name, score, a, b, c, d, e, f, g, h in devs:
-        print(e)
+    for name, loc, age_score, additions, deletions, new_boost, commits in devs:
+        print(new_boost)
         counter += 1
         if counter > MAX_COUNTER:
             break
-    print("------------------f")
+    print("------------------commits")
     counter = 1
-    for name, score, a, b, c, d, e, f, g, h in devs:
-        print(f)
+    for name, loc, age_score, additions, deletions, new_boost, commits in devs:
+        print(commits)
         counter += 1
         if counter > MAX_COUNTER:
             break
@@ -255,7 +256,7 @@ BOOST_FACTOR = 1.5
 MAX_AGE_SCORE = pow(365*10, AGE_FACTOR)
 
 # get annotate of specified file
-repo_path = "C:/Users/debarrao/Desktop/FYP/extracted-repos/rspack"
+repo_path = "C:/Users/debarrao/Desktop/FYP/extracted-repos/ruby/spec/ruby"
 REPO_END = 46 # how many characters until the slash after extracted-repos
 print("[START]")
 
@@ -264,7 +265,7 @@ get_oldest_commit(oldest_commit, "cd " + repo_path[2:])
 #get blame
 exclude = set(['.git', '.gitlab', '.github'])
 exclude_file = set(['ico', 'svg', 'png', 'jpg', 'jpeg', 'tif', 'woff', 'woff2', 
-                    'ttf', 'bin', 'zip', 'tar', 'gz', 'webp', 'ts', 'gif'])
+                    'ttf', 'bin', 'zip', 'tar', 'gz', 'webp', 'ts', 'gif', 'tmpl'])
 for root, dirs, files in os.walk(repo_path, topdown=True):
     dirs[:] = [d for d in dirs if d not in exclude]
     for filename in files:
