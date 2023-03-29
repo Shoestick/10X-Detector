@@ -101,7 +101,7 @@ def authors_oldest_commit(oldest_commit, name):
 def get_additions_deletions(devs, repo_path):
     for i in range(len(devs)):
         command = "cd "+ repo_path[2:] + " && git log --author=\"" + devs[i][0] +"\" --format=tformat: --numstat"
-        numstats = subprocess.check_output(command, shell=True).decode('utf-8')
+        numstats = subprocess.check_output(command, shell=True).decode('utf-8', errors="replace")
         numstats_lines = numstats.split("\n")
         total_additions = 0
         total_deletions = 0
@@ -122,7 +122,7 @@ def get_additions_deletions(devs, repo_path):
         
 def get_commits(devs, repo_path):
     command = "cd " + repo_path[2:] + " && git shortlog -sn --all"
-    annotation = subprocess.check_output(command, shell=True).decode('utf-8')
+    annotation = subprocess.check_output(command, shell=True).decode('utf-8', errors="replace")
 
     # split paragraph string into lines
     segannotate = annotation.split("\n")
@@ -194,7 +194,7 @@ def print_rank(devs):
 
 def print_order(devs):
     devs.sort(reverse=True, key=takeSecond)
-    MAX_COUNTER = 50
+    MAX_COUNTER = 100
     print("----------NAMES---------")
     counter = 1
     for name, loc, age_score, additions, deletions, new_boost, commits in devs:
@@ -256,7 +256,7 @@ BOOST_FACTOR = 1.5
 MAX_AGE_SCORE = pow(365*10, AGE_FACTOR)
 
 # get annotate of specified file
-repo_path = "C:/Users/debarrao/Desktop/FYP/extracted-repos/ruby/spec/ruby"
+repo_path = "C:/Users/oisin/Desktop/Forth-Year/FYP/extracted-repos/git/t"
 REPO_END = 46 # how many characters until the slash after extracted-repos
 print("[START]")
 
@@ -275,7 +275,7 @@ for root, dirs, files in os.walk(repo_path, topdown=True):
         if not (ftype in exclude_file): # text file types
             print("[PROCESSING] Processing ", filename)
             command = "cd " + repo_path[2:REPO_END] + root[REPO_END:] + " && git annotate " + filename
-            annotation = subprocess.check_output(command, shell=True).decode('utf-8')
+            annotation = subprocess.check_output(command, shell=True).decode('utf-8', errors='replace')
             
             # split paragraph string into lines
             segannotate = annotation.split("\n")
