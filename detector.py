@@ -147,7 +147,7 @@ def get_commits(devs, repo_path):
                 break
     
 # calulate dev score
-def get_score(devs, hloc, h_a_s, hadditions, h_boost, hdeletions):
+def get_score(devs, hloc, h_a_s, hadditions, h_boost, hdeletions, hcommits):
     #
     # calculation: 
     #
@@ -161,18 +161,19 @@ def get_score(devs, hloc, h_a_s, hadditions, h_boost, hdeletions):
         deletions = devs[j][5]
         commits = devs[j][6]
         
-        a = loc
-        b = age_score
+        a = loc / hloc
+        b = age_score / hloc
         if additions != 0:
             c = (loc * b) / additions # age score is inversly proportional to c, as I care less that their loc is small compared to additions if they have a large age score
         d = pow(new_boost, BOOST_FACTOR)
-        e = additions
-        f = commits
-        g = age_score / commits
-        h = additions / commits
-        score = 1*a + 0*b + 0*c + 0*d + 0*e + 0*f + 0*g
+        e = additions / hadditions
+        f = commits / hcommits
+        if f != 0:
+            g = b / f
+            h = e / f
+        score = 10*a + 10*b + 0*c + 0*d + 0*e + 0*f + 40*g + 40*h
         
-        devs[j] = (name, round(loc, 5), round(age_score, 5), round(additions, 5), round(deletions, 5), round(new_boost, 5), round(commits, 5))
+        devs[j] = (name, round(score, 2), round(loc, 3), round(age_score, 3), round(additions, 3), round(deletions, 3), round(new_boost, 3), round(commits, 3), round(commits, 3))
         
 # function to make sorting function usable                   
 def takeSecond(elem):
@@ -185,7 +186,7 @@ def print_rank(devs):
     rank = 1
     print("\n[PRINTING] Printing according to rank, name and score\n")
     for name, score, a, b, c, d, e, f, g in devs:
-        print(rank, name, score, "|", a, b, c, d, e, f, g)
+        print(rank, name, score)#, "|", a, b, c, d, e, f, g)
         rank += 1
         if rank > 50:
             break
@@ -256,7 +257,7 @@ BOOST_FACTOR = 1.5
 MAX_AGE_SCORE = pow(365*10, AGE_FACTOR)
 
 # get annotate of specified file
-repo_path = "C:/Users/oisin/Desktop/Forth-Year/FYP/extracted-repos/git/t"
+repo_path = "C:/Users/oisin/Desktop/Forth-Year/FYP/extracted-repos/html5-boilerplate"
 REPO_END = 46 # how many characters until the slash after extracted-repos
 print("[START]")
 
@@ -280,7 +281,7 @@ for root, dirs, files in os.walk(repo_path, topdown=True):
             # split paragraph string into lines
             segannotate = annotation.split("\n")
 
-            # MAIN ### MAIN ### MAIN ### MAIN ### MAIN ### MAIN ### MAIN ### MAIN
+            # MAIN #
             for i in range(len(segannotate) - 1):
                 # split line to get code from the line
                 word = segannotate[i].split("\t")
@@ -350,6 +351,7 @@ highest_loc = 1
 highest_additions = 1
 highest_new_boost = 1
 highest_deletions = 1
+highest_commits = 1
 
 def highest(i, test_condition, highest_test):
     test = devs[i][test_condition]
@@ -359,11 +361,12 @@ def highest(i, test_condition, highest_test):
     
 for i in range(len(devs)):
     highest_loc = highest(i, 1, highest_loc)
-    #highest_age_score = highest(i, 2, highest_age_score)
+    highest_age_score = highest(i, 2, highest_age_score)
     highest_additions = highest(i, 3, highest_additions)
     highest_new_boost = highest(i, 4, highest_new_boost)
     highest_deletions = highest(i, 5, highest_deletions)
+    highest_commits = highest(i, 6, highest_commits)
 
-get_score(devs, highest_loc, highest_age_score, highest_additions, highest_new_boost, highest_deletions)
+get_score(devs, highest_loc, highest_age_score, highest_additions, highest_new_boost, highest_deletions, highest_commits)
     
-print_order(devs)
+print_rank(devs)

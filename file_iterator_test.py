@@ -23,11 +23,30 @@ def get_code_factor(ftype):
     return 1
 
  # get annotate of specified file
-repo_path = "C:/Users/oisin/Desktop/Forth-Year/FYP/extracted-repos/rspack"
+
+# function to make sorting function usable                   
+def takeSecond(elem):
+    return elem[1]
+
+def print_rank(devs):
+    # print based on loc
+    devs.sort(reverse=True, key=takeSecond)
+    rank = 1
+    print("\n[PRINTING] Printing according to rank, name and score\n")
+    for name, score in devs:
+        print(rank, name, score)
+        rank += 1
+        if rank > 50:
+            break
+    print("\n[END]")
+    
+repo_path = "C:/Users/oisin/Desktop/Forth-Year/FYP/extracted-repos/ruby"
 cd_repo = "cd " + repo_path[2:]
 
 command = cd_repo + " && git whatchanged"
 whatchanged = subprocess.check_output(command, shell=True).decode('utf-8')
+
+devs = []
 
 line = whatchanged.split("\n")
 author = ""
@@ -36,33 +55,36 @@ files_pcommit_score = 0
 highest_files_pcommit_score = 0
 hfpcs = 0
 hfc = 0
-for i in range(500):#range(len(line) - 1):
+for i in range(len(line) - 1):
     if line[i] != "":
         if line[i][0] == "A":
             if author != "":
                 if files_pcommit_score / files_pcommit >= 0.52:
-                    print("files ->", files_pcommit, "score ->",round(files_pcommit_score, 4))
-                    #print("files_pcommit_score / 16 =", files_pcommit_score / 16)
-                    #print("(files_pcommit_score / 16) + 1 =", (files_pcommit_score / 16) + 1)
-                    #print("pow((files_pcommit_score / 16) + 1, files_pcommit) =", pow((files_pcommit_score / 16) + 1, files_pcommit))
-                    #print("pow ->", round(pow(files_pcommit_score / files_pcommit + 1, files_pcommit / 8 + 1), 4))
-                    final = round(pow(files_pcommit, files_pcommit_score / files_pcommit + 0.45), 4)
-                    if final > 50:
-                        final = 50
-                    print("pow->", final)
-                    print("------------")
-                    
-                    #final = round(pow(files_pcommit_score / files_pcommit + 1, files_pcommit / 8 + 1), 4)
-                    
-                    if final > highest_files_pcommit_score:
-                        highest_files_pcommit_score = final
-                        hfpcs = files_pcommit_score
-                        hfc = files_pcommit
+                    #calulate score for this commit
+                    score = pow(files_pcommit, files_pcommit_score / files_pcommit + 0.45)
+                    #cap score
+                    if score > 50:
+                        score = 50
+                    #add score to authors total score
+                    if len(devs) == 0:
+                        devs.append((author, score))
+                    else:
+                        for j in range(len(devs)):
+                            # check to see if name is already on the list, if so +1
+                            if devs[j][0] == author:
+                                temp = devs[j][1]
+                                temp += score
+                                
+                                devs[j] = (author, temp)
+                                break
+                            #if not, create a new name with a single loc
+                            elif j == len(devs) - 1:
+                                devs.append((author, score))
+                    #reset
                     files_pcommit_score = 0
                     files_pcommit = 0
             
             author = line[i][8:line[i].find("<") - 1]
-            #print(author)
         elif line[i][0] == ":":
             files_pcommit += 1
             #print(line[i])
@@ -72,6 +94,5 @@ for i in range(500):#range(len(line) - 1):
             ftype = temp[len(temp) - 1]
             #print(ftype, get_code_factor(ftype))
             files_pcommit_score += (get_code_factor(ftype) + 1) / 2
-print("Highest: ", highest_files_pcommit_score)
-print("code score", round(hfpcs / hfc + 0.45, 3))
-print("no. files", hfc)
+            
+print_rank(devs)
