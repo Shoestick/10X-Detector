@@ -55,7 +55,8 @@ def print_rank(devs):
 from datetime import date
 import subprocess
 
-devs = []
+devs = [] # list to save developers names and number of active weeks
+wk_devs = [] # list to save developers names if they've commited within the week
 
 repo_path = "C:/Users/oisin/Desktop/Forth-Year/FYP/extracted-repos/html5-boilerplate"
 """
@@ -65,28 +66,48 @@ print(day_difference("2010-1-23", oldest_commit_date))
 command = "cd" + repo_path[2:] + " && git log --pretty=format:\"%an%x09%ad\" --date=format:\"%Y-%m-%d\""
 log = subprocess.check_output(command, shell=True).decode('utf-8', errors="replace")
 
+oldest_commit_date = get_oldest_commit("cd" + repo_path[2:])
 seglog = log.split("\n")
-
+curr_wk_no = -1
+wk_no = -1
 for i in range(len(seglog) - 1):
+    print("[PROCESSING] ", i + 1, "/", len(seglog) - 1)
     # process lines of log
     word = seglog[i].split("\t")
     author = word[0]
     unprocessed_date = word[1]
     
+    # checking to see if it is the next week
+    wk_no = day_difference(unprocessed_date, oldest_commit_date) // 7
+    if wk_no != curr_wk_no:
+        wk_devs.clear()
+        curr_wk_no = wk_no
+    
     # handle exception
     if len(devs) == 0:
         devs.append((author, 1))
+        wk_devs.append(author)
     else:
-        for j in range(len(devs)):
-            # check to see if name is already on the list, if so +1
-            if devs[j][0] == author:
-                temp = devs[j][1]
-                temp += 1
-                
-                devs[j] = (author, temp)
+        # check to see if the author has already been seen this week
+        skip = False
+        for j in range(len(wk_devs)):
+            if wk_devs[j] == author:
+                skip = True
                 break
-            #if not, create a new name with a single commit
-            elif j == len(devs) - 1:
-                devs.append((author, 1))
+        if skip == False:
+        # otherwise process the name
+            for j in range(len(devs)):
+                # check to see if name is already on the list, if so +1
+                if devs[j][0] == author:
+                    temp = devs[j][1]
+                    temp += 1
+                    
+                    devs[j] = (author, temp)
+                    wk_devs.append(author)
+                    break
+                #if not, create a new name with a single commit
+                elif j == len(devs) - 1:
+                    devs.append((author, 1))
+                    wk_devs.append(author)
                 
 print_rank(devs)
