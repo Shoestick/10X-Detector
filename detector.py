@@ -3,7 +3,7 @@ import os
 from datetime import date
 
 # get the oldest commit an author has contributed
-def get_oldest_commit(oldest_commit, cd_repo):
+def get_oldest_commit_pdev(oldest_commit, cd_repo):
     command = cd_repo + " && git log --pretty=format:\"%an%x09%ad\" --date=format:\"%Y-%m-%d\""
     annotation = subprocess.check_output(command, shell=True).decode('utf-8', errors="replace")
 
@@ -167,7 +167,7 @@ def get_score(devs, hloc, h_a_s, hadditions, h_boost, hdeletions, hcommits):
             c = (loc * b) / additions # age score is inversly proportional to c, as I care less that their loc is small compared to additions if they have a large age score
         d = pow(new_boost, BOOST_FACTOR)
         e = additions / hadditions
-        f = commits / hcommits
+        f = commits
         if f != 0:
             g = b / f
             h = e / f
@@ -261,7 +261,7 @@ repo_path = "C:/Users/oisin/Desktop/Forth-Year/FYP/extracted-repos/html5-boilerp
 REPO_END = 46 # how many characters until the slash after extracted-repos
 print("[START]")
 
-get_oldest_commit(oldest_commit, "cd " + repo_path[2:])
+get_oldest_commit_pdev(oldest_commit, "cd " + repo_path[2:])
 
 #get blame
 exclude = set(['.git', '.gitlab', '.github'])
