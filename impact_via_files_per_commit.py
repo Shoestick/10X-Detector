@@ -40,7 +40,26 @@ def print_rank(devs):
             break
     print("\n[END]")
     
-repo_path = "C:/Users/oisin/Desktop/Forth-Year/FYP/extracted-repos/ruby"
+def print_order(devs):
+    # print based on loc
+    devs.sort(reverse=True, key=takeSecond)
+    rank = 1
+    print("\n[PRINTING] Printing according to rank, name and score\n")
+    for name, score in devs:
+        print(name)
+        rank += 1
+        if rank > 50:
+            break
+    print("-----")
+    rank = 1
+    for name, score in devs:
+        print(score)
+        rank += 1
+        if rank > 50:
+            break
+    print("\n[END]")
+    
+repo_path = "C:/Users/oisin/Desktop/Forth-Year/FYP/extracted-repos/rspack"
 cd_repo = "cd " + repo_path[2:]
 
 command = cd_repo + " && git whatchanged"
@@ -95,4 +114,4 @@ for i in range(len(line) - 1):
             #print(ftype, get_code_factor(ftype))
             files_pcommit_score += (get_code_factor(ftype) + 1) / 2
             
-print_rank(devs)
+print_order(devs)

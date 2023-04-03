@@ -52,17 +52,33 @@ def print_rank(devs):
             break
     print("\n[END]")
 
+def print_order(devs):
+    # print based on loc
+    devs.sort(reverse=True, key=takeSecond)
+    rank = 1
+    print("\n[PRINTING] Printing according to rank, name and score\n")
+    for name, score in devs:
+        print(name)
+        rank += 1
+        if rank > 50:
+            break
+    print("-----")
+    rank = 1
+    for name, score in devs:
+        print(score)
+        rank += 1
+        if rank > 50:
+            break
+    print("\n[END]")
+
 from datetime import date
 import subprocess
 
 devs = [] # list to save developers names and number of active weeks
 wk_devs = [] # list to save developers names if they've commited within the week
 
-repo_path = "C:/Users/oisin/Desktop/Forth-Year/FYP/extracted-repos/html5-boilerplate"
-"""
-oldest_commit_date = get_oldest_commit("cd " + repo_path[2:])
-print(day_difference("2010-1-23", oldest_commit_date))
-"""
+print("[START]")
+repo_path = "C:/Users/oisin/Desktop/Forth-Year/FYP/extracted-repos/rspack"
 command = "cd" + repo_path[2:] + " && git log --pretty=format:\"%an%x09%ad\" --date=format:\"%Y-%m-%d\""
 log = subprocess.check_output(command, shell=True).decode('utf-8', errors="replace")
 
@@ -71,7 +87,8 @@ seglog = log.split("\n")
 curr_wk_no = -1
 wk_no = -1
 for i in range(len(seglog) - 1):
-    print("[PROCESSING] ", i + 1, "/", len(seglog) - 1)
+    if i % 5 == 0:
+        print("[PROCESSING] ", i + 1, "/", len(seglog) - 1)
     # process lines of log
     word = seglog[i].split("\t")
     author = word[0]
@@ -79,6 +96,7 @@ for i in range(len(seglog) - 1):
     
     # checking to see if it is the next week
     wk_no = day_difference(unprocessed_date, oldest_commit_date) // 7
+    
     if wk_no != curr_wk_no:
         wk_devs.clear()
         curr_wk_no = wk_no
@@ -110,4 +128,4 @@ for i in range(len(seglog) - 1):
                     devs.append((author, 1))
                     wk_devs.append(author)
                 
-print_rank(devs)
+print_order(devs)
