@@ -73,7 +73,7 @@ def get_code_factor(ftype):
     middling = set(['js', 'java', 'cs', 'rb', 'py', 'kt', 'ts'])
     high = set(['c', 'cpp', 'cc', 'h', 'hh'])
     vhigh = set(['rs', 'go', 'hs', 'lhs', '.ex'])
-    
+    """
     # ordered by which it's most likely to be
     if(ftype in middling):
         return 1
@@ -85,7 +85,7 @@ def get_code_factor(ftype):
         return 0.05
     elif(ftype in vhigh):
         return 1.6
-    
+    """
     return 1
     
 # takes in oldest_commit and name, and return how old the oldest commit of that author is

@@ -57,7 +57,7 @@ NEW_BOOST_PERIOD = 365 // 2
 AGE_FACTOR = 3
 
 # get annotate of specified file
-repo_path = "C:/Users/oisin/Desktop/Forth-Year/FYP/extracted-repos/html5-boilerplate"
+repo_path = "C:/Users/oisin/Desktop/Forth-Year/FYP/extracted-repos/ruby"
 
 print("[START]")
 
@@ -69,7 +69,8 @@ def get_code_factor(ftype):
     # 100+: yml, rdoc, depend, ts, tsx, build, gitignore, am, xcf, cmake, osl
     # misc: gitignore, editorconfig, gitattributes
     # h, xml, cc, dat, kt, *sh*, glsl, po, hh, webp, json
-    vlow = set(['txt', 'md', 'css', 'html', 'xml', 'json'])
+    vlow = set(['txt', 'md', 'rdoc', 'y', 'pem',  'markdown'])
+    low = set(['css', 'html', 'xml', 'json', 'yml', 'depend', 'gemspec', 'src', 'm4', '1'])
     middling = set(['js', 'java', 'cs', 'rb', 'py', 'kt'])
     high = set(['c', 'cpp', 'cc', 'h', 'hh'])
     vhigh = set(['rs', 'go', 'hs', 'lhs', '.ex'])
@@ -77,12 +78,14 @@ def get_code_factor(ftype):
     score = 0
     if(ftype in vlow):
         score = 1#0.05
+    elif(ftype in low):
+        score = 2
     elif(ftype in middling):
-        score = 2#1
+        score = 3#1
     elif(ftype in high):
-        score = 3#1.3
+        score = 4#1.3
     elif(ftype in vhigh):
-        score = 4#1.6
+        score = 5#1.6
     
     return score
 
@@ -91,6 +94,7 @@ one = 0
 two = 0
 three = 0
 four = 0
+five=0
 total = 0
 file_types = []
 #get blame
@@ -131,18 +135,22 @@ for root, dirs, files in os.walk(repo_path, topdown=True):
                 three += 1
             elif code_factor == 4:
                 four += 1
+            elif code_factor == 5:
+                five += 1
             total += 1
          
 pzero = zero / total
 pone = one / total  
 ptwo = two / total  
 pthree = three / total  
-pfour = four / total                 
-print("[OUTPUT]", zero, "zeros", 100*round(pzero, 2))
-print("[OUTPUT]", one, "ones", 100*round(pone, 2))
-print("[OUTPUT]", two, "twos", 100*round(ptwo, 2))
-print("[OUTPUT]", three, "threes", 100*round(pthree, 2))
-print("[OUTPUT]", four, "fours", 100*round(pfour, 2))
+pfour = four / total     
+pfive = five / total            
+print("[OUTPUT]", zero, "undocced", 100*round(pzero, 3))
+print("[OUTPUT]", one, "vlow", 100*round(pone, 3))
+print("[OUTPUT]", two, "low", 100*round(ptwo, 3))
+print("[OUTPUT]", three, "mids", 100*round(pthree, 3))
+print("[OUTPUT]", four, "high", 100*round(pfour, 3))
+print("[OUTPUT]", five, "vhigh", 100*round(pfive, 3))
 
 print("[OUTPUT]", total, "total")
 
